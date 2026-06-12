@@ -694,6 +694,27 @@ setInterval(refreshPortfolio, CONFIG.refreshIntervalSeconds * 1000);
     };
   }
 
+  const days = history[symbols[0]].timestamps.length;
+
+  CONFIG.thisYearEquity = [];
+
+  for (let i = 0; i < days; i += 5) { // weekly sampling
+    let total = 0;
+
+    for (const h of CONFIG.holdings) {
+      const price = history[h.symbol].closes[i];
+      total += price * h.shares;
+    }
+
+    const date = new Date(history[symbols[0]].timestamps[i] * 1000);
+
+    CONFIG.thisYearEquity.push({
+      label: date.toISOString().slice(0, 10),
+      value: total
+    });
+  }
+}
+
     
   // =========================
   // KPI CALCULATIONS
