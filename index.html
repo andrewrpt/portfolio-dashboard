@@ -488,20 +488,20 @@
   // =========================
 
   // =========================
-  // LIVE PRICES + PORTFOLIO TABLE
-  // =========================
+// LIVE PRICES + PORTFOLIO TABLE
+// =========================
 
-  const yearNow = new Date().getFullYear();
-  document.getElementById("yearLabel").textContent = yearNow;
-  document.getElementById("refreshSeconds").textContent =
-    CONFIG.refreshIntervalSeconds.toString();
+const yearNow = new Date().getFullYear();
+document.getElementById("yearLabel").textContent = yearNow;
+document.getElementById("refreshSeconds").textContent =
+  CONFIG.refreshIntervalSeconds.toString();
 
-  // Fetch quotes from Yahoo Finance (unofficial endpoint)
-  async function fetchQuotes(symbols) {
+// Fetch quotes from Finnhub
+async function fetchQuotes(symbols) {
   const results = {};
 
   for (const s of symbols) {
-    const url = `https://finnhub.io/api/v1/quote?symbol=${s}&token=d8lvamhr01qnkjl944tgd8lvamhr01qnkjl944u0`;
+    const url = `https://finnhub.io/api/v1/quote?symbol=${s}&token=API_KEY_AQUI`;
 
     const res = await fetch(url);
     const data = await res.json();
@@ -515,91 +515,87 @@
   return results;
 }
 
-  
-    return bySymbol;
-  }
+// Refresh portfolio table
+async function refreshPortfolio() {
+  const symbols = CONFIG.holdings.map(h => h.symbol.toUpperCase());
+  if (!symbols.length) return;
 
-  // Refresh portfolio table
-  async function refreshPortfolio() {
-    const symbols = CONFIG.holdings.map(h => h.symbol.toUpperCase());
-    if (!symbols.length) return;
+  try {
+    const quotes = await fetchQuotes(symbols);
+    const tbody = document.getElementById("tickerBody");
+    tbody.innerHTML = "";
+    let total = 0;
 
-    try {
-      const quotes = await fetchQuotes(symbols);
-      const tbody = document.getElementById("tickerBody");
-      tbody.innerHTML = "";
-      let total = 0;
+    CONFIG.holdings.forEach(h => {
+      const q = quotes[h.symbol.toUpperCase()];
+      const price = q?.price ?? 0;
+      const changePct = q?.changePct ?? 0;
+      const value = price * h.shares;
+      total += value;
 
-      CONFIG.holdings.forEach(h => {
-        const q = quotes[h.symbol.toUpperCase()];
-        const price = q?.price ?? 0;
-        const changePct = q?.changePct ?? 0;
-        const value = price * h.shares;
-        total += value;
+      const tr = document.createElement("tr");
 
-        const tr = document.createElement("tr");
+      const tdSymbol = document.createElement("td");
+      tdSymbol.textContent = h.symbol;
 
-        const tdSymbol = document.createElement("td");
-        tdSymbol.textContent = h.symbol;
+      const tdShares = document.createElement("td");
+      tdShares.textContent = h.shares.toLocaleString();
 
-        const tdShares = document.createElement("td");
-        tdShares.textContent = h.shares.toLocaleString();
+      const tdPrice = document.createElement("td");
+      tdPrice.textContent =
+        price === 0
+          ? "–"
+          : CONFIG.currency +
+            price.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
-        const tdPrice = document.createElement("td");
-        tdPrice.textContent =
-          price === 0
-            ? "–"
-            : CONFIG.currency +
-              price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      const tdValue = document.createElement("td");
+      tdValue.textContent =
+        price === 0
+          ? "–"
+          : CONFIG.currency +
+            value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
-        const tdValue = document.createElement("td");
-        tdValue.textContent =
-          price === 0
-            ? "–"
-            : CONFIG.currency +
-              value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      const tdChange = document.createElement("td");
+      tdChange.textContent =
+        price === 0 ? "–" : changePct.toFixed(2) + "%";
+      tdChange.style.color =
+        changePct > 0
+          ? "#4caf50"
+          : changePct < 0
+          ? "#ff6b6b"
+          : "#ffb74d";
 
-        const tdChange = document.createElement("td");
-        tdChange.textContent =
-          price === 0 ? "–" : changePct.toFixed(2) + "%";
-        tdChange.style.color =
-          changePct > 0
-            ? "#4caf50"
-            : changePct < 0
-            ? "#ff6b6b"
-            : "#ffb74d";
+      tr.appendChild(tdSymbol);
+      tr.appendChild(tdShares);
+      tr.appendChild(tdPrice);
+      tr.appendChild(tdValue);
+      tr.appendChild(tdChange);
 
-        tr.appendChild(tdSymbol);
-        tr.appendChild(tdShares);
-        tr.appendChild(tdPrice);
-        tr.appendChild(tdValue);
-        tr.appendChild(tdChange);
+      tbody.appendChild(tr);
+    });
 
-        tbody.appendChild(tr);
+    document.getElementById("portfolioTotal").textContent =
+      CONFIG.currency +
+      total.toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+    const now = new Date();
+    document.getElementById("lastUpdated").textContent =
+      "Updated " +
+      now.toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
       });
-
-      document.getElementById("portfolioTotal").textContent =
-        CONFIG.currency +
-        total.toLocaleString(undefined, { maximumFractionDigits: 2 });
-
-      const now = new Date();
-      document.getElementById("lastUpdated").textContent =
-        "Updated " +
-        now.toLocaleTimeString(undefined, {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
-        });
-    } catch (e) {
-      document.getElementById("lastUpdated").textContent =
-        "Error updating prices – check network or API";
-      console.error(e);
-    }
+  } catch (e) {
+    document.getElementById("lastUpdated").textContent =
+      "Error updating prices – check network or API";
+    console.error(e);
   }
+}
 
-  // Initial load + auto-refresh
-  refreshPortfolio();
-  setInterval(refreshPortfolio, CONFIG.refreshIntervalSeconds * 1000);
+// Initial load + auto-refresh
+refreshPortfolio();
+setInterval(refreshPortfolio, CONFIG.refreshIntervalSeconds * 1000);
 
   // =========================
   // REALIZED PROFIT (SOLD TRADES)
