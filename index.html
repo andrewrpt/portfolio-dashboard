@@ -501,7 +501,7 @@ async function fetchQuotes(symbols) {
   const results = {};
 
   for (const s of symbols) {
-    const url = `https://finnhub.io/api/v1/quote?symbol=${s}&token=API_KEY_AQUI`;
+    const url = `https://finnhub.io/api/v1/quote?symbol=${s}&token=d8lvamhr01qnkjl944tgd8lvamhr01qnkjl944u0`;
 
     const res = await fetch(url);
     const data = await res.json();
