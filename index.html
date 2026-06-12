@@ -674,7 +674,8 @@ setInterval(refreshPortfolio, CONFIG.refreshIntervalSeconds * 1000);
   // EQUITY CURVE (SIMPLIFIED WEEKLY)
   // =========================
 
-  async function buildEquityCurveSimplified() {
+
+async function buildEquityCurveSimplified() {
   const symbols = CONFIG.holdings.map(h => h.symbol);
 
   const now = Math.floor(Date.now() / 1000);
@@ -714,6 +715,7 @@ setInterval(refreshPortfolio, CONFIG.refreshIntervalSeconds * 1000);
     });
   }
 }
+
 
     
   // =========================
