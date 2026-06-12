@@ -39,7 +39,6 @@
 <script>
 const API_KEY = "d8lvamhr01qnkjl944tgd8lvamhr01qnkjl944u0";
 
-// O teu portefólio
 const holdings = [
   { symbol: "NVDA", shares: 400 },
   { symbol: "MU",   shares: 77 },
@@ -50,14 +49,6 @@ const holdings = [
   { symbol: "AMZN", shares: 10 }
 ];
 
-// Buscar preço atual
-async function getQuote(symbol) {
-  const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
-  const r = await fetch(url);
-  return await r.json();
-}
-
-// Buscar candles desde 1 de janeiro
 async function getYearCandles(symbol) {
   const year = new Date().getFullYear();
   const from = Math.floor(new Date(year, 0, 1).getTime() / 1000);
@@ -69,21 +60,29 @@ async function getYearCandles(symbol) {
 }
 
 async function buildDashboard() {
-  let totalCurrent = 0;
-  let totalStart = 0;
+  // 1) Buscar candles de todos os símbolos UMA vez
+  const history = {};
+  for (const h of holdings) {
+    history[h.symbol] = await getYearCandles(h.symbol);
+  }
 
-  const equityCurve = [];
+  // Usamos NVDA como referência
+  const ref = history["NVDA"];
+  if (!ref || !ref.t || !ref.c) {
+    console.error("Erro a carregar dados de NVDA", ref);
+    return;
+  }
 
-  // Usamos NVDA como referência para as datas
-  const ref = await getYearCandles("NVDA");
   const days = ref.t.length;
+  const equityCurve = [];
+  let totalStart = 0;
+  let totalCurrent = 0;
 
-  // Para cada dia desde 1 de janeiro
   for (let i = 0; i < days; i++) {
     let totalDay = 0;
 
     for (const h of holdings) {
-      const data = await getYearCandles(h.symbol);
+      const data = history[h.symbol];
       const price = data.c[i];
       totalDay += price * h.shares;
 
@@ -95,7 +94,6 @@ async function buildDashboard() {
     equityCurve.push({ date, value: totalDay });
   }
 
-  // Atualizar UI
   document.getElementById("currentValue").textContent =
     "Current value: $" + totalCurrent.toLocaleString();
 
@@ -103,7 +101,6 @@ async function buildDashboard() {
   document.getElementById("ytdChange").textContent =
     "YTD: " + pct.toFixed(2) + "%";
 
-  // Gráfico
   const ctx = document.getElementById("equityChart").getContext("2d");
   new Chart(ctx, {
     type: "line",
@@ -117,21 +114,11 @@ async function buildDashboard() {
         fill: true,
         tension: 0.2
       }]
-    },
-    options: {
-      scales: {
-        y: {
-          ticks: {
-            callback: v => "$" + v.toLocaleString()
-          }
-        }
-      }
     }
   });
 }
 
 buildDashboard();
 </script>
-
 </body>
 </html>
