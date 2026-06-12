@@ -512,9 +512,6 @@ async function fetchQuotes(symbols) {
     };
   }
 
-  return results;
-}
-
 // Refresh portfolio table
 async function refreshPortfolio() {
   const symbols = CONFIG.holdings.map(h => h.symbol.toUpperCase());
