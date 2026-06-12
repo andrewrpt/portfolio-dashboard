@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Portfolio YTD Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background: #0b1020;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .card {
+      background: #151a2c;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Portfolio YTD Performance</h1>
+
+  <div class="card">
+    <h2>Current Portfolio Value</h2>
+    <p id="currentValue">Loading…</p>
+    <p id="ytdChange"></p>
+  </div>
+
+  <div class="card">
+    <h2>YTD Equity Curve</h2>
+    <canvas id="equityChart"></canvas>
+  </div>
+
+<script>
+const API_KEY = "d8lvamhr01qnkjl944tgd8lvamhr01qnkjl944u0";
+
+// O teu portefólio
+const holdings = [
+  { symbol: "NVDA", shares: 400 },
+  { symbol: "MU",   shares: 77 },
+  { symbol: "TSLA", shares: 180 },
+  { symbol: "LITE", shares: 29 },
+  { symbol: "AVGO", shares: 60 },
+  { symbol: "META", shares: 10 },
+  { symbol: "AMZN", shares: 10 }
+];
+
+// Buscar preço atual
+async function getQuote(symbol) {
+  const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
+  const r = await fetch(url);
+  return await r.json();
+}
+
+// Buscar candles desde 1 de janeiro
+async function getYearCandles(symbol) {
+  const year = new Date().getFullYear();
+  const from
