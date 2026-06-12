@@ -60,4 +60,78 @@ async function getQuote(symbol) {
 // Buscar candles desde 1 de janeiro
 async function getYearCandles(symbol) {
   const year = new Date().getFullYear();
-  const from
+  const from = Math.floor(new Date(year, 0, 1).getTime() / 1000);
+  const to = Math.floor(Date.now() / 1000);
+
+  const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${to}&token=${API_KEY}`;
+  const r = await fetch(url);
+  return await r.json();
+}
+
+async function buildDashboard() {
+  let totalCurrent = 0;
+  let totalStart = 0;
+
+  const equityCurve = [];
+
+  // Usamos NVDA como referência para as datas
+  const ref = await getYearCandles("NVDA");
+  const days = ref.t.length;
+
+  // Para cada dia desde 1 de janeiro
+  for (let i = 0; i < days; i++) {
+    let totalDay = 0;
+
+    for (const h of holdings) {
+      const data = await getYearCandles(h.symbol);
+      const price = data.c[i];
+      totalDay += price * h.shares;
+
+      if (i === 0) totalStart += price * h.shares;
+      if (i === days - 1) totalCurrent += price * h.shares;
+    }
+
+    const date = new Date(ref.t[i] * 1000).toISOString().slice(0, 10);
+    equityCurve.push({ date, value: totalDay });
+  }
+
+  // Atualizar UI
+  document.getElementById("currentValue").textContent =
+    "Current value: $" + totalCurrent.toLocaleString();
+
+  const pct = ((totalCurrent - totalStart) / totalStart) * 100;
+  document.getElementById("ytdChange").textContent =
+    "YTD: " + pct.toFixed(2) + "%";
+
+  // Gráfico
+  const ctx = document.getElementById("equityChart").getContext("2d");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: equityCurve.map(p => p.date),
+      datasets: [{
+        label: "Portfolio Value",
+        data: equityCurve.map(p => p.value),
+        borderColor: "#4cafef",
+        backgroundColor: "rgba(76,175,239,0.2)",
+        fill: true,
+        tension: 0.2
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          ticks: {
+            callback: v => "$" + v.toLocaleString()
+          }
+        }
+      }
+    }
+  });
+}
+
+buildDashboard();
+</script>
+
+</body>
+</html>
