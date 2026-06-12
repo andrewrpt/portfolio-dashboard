@@ -515,19 +515,7 @@
   return results;
 }
 
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Failed to fetch quotes");
-
-    const data = await res.json();
-    const bySymbol = {};
-
-    (data.quoteResponse.result || []).forEach(q => {
-      bySymbol[q.symbol.toUpperCase()] = {
-        price: q.regularMarketPrice,
-        changePct: q.regularMarketChangePercent
-      };
-    });
-
+  
     return bySymbol;
   }
 
